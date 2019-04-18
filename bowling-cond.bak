@@ -16,6 +16,18 @@
     [(list this next next-after rest ...) #:when (= 10 (+ this next)) (+ 10 next-after (recurse-skip 2))]
     [(list this next rest ... ) (+ this next (recurse-skip 2))])))
 
+(define (strike? roll) (eq? 10 roll))
+(define (spare? rolls) (eq? 10 (apply + rolls)))
+
+(define (score-cond rolls)
+  (let* ([this (car rolls)]
+         [next (cadr rolls)]
+         [isLastFrame? (< (length rolls) 4)])
+  (cond
+    [(strike? this) (+ 10 next (caddr rolls) (if isLastFrame? 0 (score-cond (cdr rolls))))]
+    [(spare? (list this next)) (+ 10 (caddr rolls) (if isLastFrame? 0 (score-cond (cddr rolls))))]
+    [else (+ this next (if isLastFrame? 0 (score-cond (cddr rolls))))])))
+
 (define (score rolls) (score-match rolls))
 
 ; tests
