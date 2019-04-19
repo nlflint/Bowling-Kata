@@ -2,6 +2,16 @@
 
 (require rackunit)
 
+(define (!= left right) (not (= left right)))
+
+(define (score-match rolls)
+  (match rolls
+    [(list 10 _) 0]
+    [(list 10 next next-after _ ...) (+ 10 next next-after (score-match (cdr rolls)))]
+    [(list this next next-after rest ...) #:when (= 10 (+ this next)) (+ 10 next-after (score-match (cddr rolls)))]
+    [(list this next rest ... ) (+ this next (score-match rest))]
+    [_ 0]))
+
 (define (strike? roll) (eq? 10 roll))
 (define (spare? rolls) (eq? 10 (apply + rolls)))
 

@@ -2,15 +2,19 @@
 
 (require rackunit)
 
-(define (!= left right) (not (= left right)))
+(define (make-recursive-skip rolls)
+  (lambda (x)
+    (cond
+      [(> (length rolls) 3) (score-match (list-tail rolls x))]
+      [else 0])))
+                                
 
 (define (score-match rolls)
+  (let ([recurse-skip (make-recursive-skip rolls)])
   (match rolls
-    [(list 10 _) 0]
-    [(list 10 next next-after _ ...) (+ 10 next next-after (score-match (cdr rolls)))]
-    [(list this next next-after rest ...) #:when (= 10 (+ this next)) (+ 10 next-after (score-match (cddr rolls)))]
-    [(list this next rest ... ) (+ this next (score-match rest))]
-    [_ 0]))
+    [(list 10 next next-after rest ...) (+ 10 next next-after (recurse-skip 1))]
+    [(list this next next-after rest ...) #:when (= 10 (+ this next)) (+ 10 next-after (recurse-skip 2))]
+    [(list this next rest ... ) (+ this next (recurse-skip 2))])))
 
 (define (strike? roll) (eq? 10 roll))
 (define (spare? rolls) (eq? 10 (apply + rolls)))
@@ -24,7 +28,7 @@
     [(spare? (list this next)) (+ 10 (caddr rolls) (if isLastFrame? 0 (score-cond (cddr rolls))))]
     [else (+ this next (if isLastFrame? 0 (score-cond (cddr rolls))))])))
 
-(define (score rolls) (score-cond rolls))
+(define (score rolls) (score-match rolls))
 
 ; tests
 (define (roll count digit) (build-list count (lambda (x) digit)))
